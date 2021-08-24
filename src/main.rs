@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use console::style;
+use console::Color;
 use itertools::Itertools;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -21,16 +22,20 @@ fn main() -> Result<()> {
         .with_context(|| format!("Could not read file '{}'", args.path.display()))?;
     let mut reader = BufReader::new(f);
     let mut line = String::new();
+    let mut line_num = 1;
     loop {
         if let Ok(0) = reader.read_line(&mut line) {
             break;
         }
         if line.contains(&args.pattern) {
             // itertools version
-            let v = line
-                .split(&args.pattern)
-                .intersperse(&format!("{}", style(&args.pattern).green().bold()))
-                .collect::<String>();
+            let v = format!(
+                "{}{}",
+                style(&line_num.to_string()).green().bold().bg(Color::Blue),
+                line.split(&args.pattern)
+                    .intersperse(&format!("{}", style(&args.pattern).green().bold()))
+                    .collect::<String>()
+            );
             // Non-itertools version
             /*
             let v = line
@@ -41,6 +46,7 @@ fn main() -> Result<()> {
             print!("{}", v);
         }
         line.clear();
+        line_num += 1;
     }
     Ok(())
 }
