@@ -1,7 +1,4 @@
 use anyhow::{Context, Result};
-use console::style;
-use console::Color;
-use itertools::Itertools;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use structopt::StructOpt;
@@ -9,11 +6,14 @@ use structopt::StructOpt;
 #[allow(unused)]
 #[derive(StructOpt)]
 struct Cli {
-    //pattern
+    // pattern
     pattern: String,
-    //path
+    // path
     #[structopt(parse(from_os_str))]
     path: std::path::PathBuf,
+    // print line number with output lines
+    #[structopt(short = "n", long = "line-number")]
+    display_line_number: bool,
 }
 
 fn main() -> Result<()> {
@@ -22,28 +22,15 @@ fn main() -> Result<()> {
         .with_context(|| format!("Could not read file '{}'", args.path.display()))?;
     let mut reader = BufReader::new(f);
     let mut line = String::new();
-    let mut line_num = 1;
+    let mut line_num: u32 = 1;
     loop {
         if let Ok(0) = reader.read_line(&mut line) {
             break;
         }
-        if line.contains(&args.pattern) {
-            // itertools version
-            let v = format!(
-                "{}{}",
-                style(&line_num.to_string()).green().bold().bg(Color::Blue),
-                line.split(&args.pattern)
-                    .intersperse(&format!("{}", style(&args.pattern).green().bold()))
-                    .collect::<String>()
-            );
-            // Non-itertools version
-            /*
-            let v = line
-                .split(&args.pattern)
-                .collect::<Vec<&str>>()
-                .join(&format!("{}", style(&args.pattern).green().bold()));
-            */
-            print!("{}", v);
+        if args.display_line_number {
+            grrs::print_output_with_numbers(&line, &args.pattern, line_num);
+        } else {
+            grrs::print_output(&line, &args.pattern);
         }
         line.clear();
         line_num += 1;
