@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use regex::Regex;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use structopt::StructOpt;
@@ -14,6 +15,10 @@ struct Cli {
     // print line number with output lines
     #[structopt(short = "n", long = "line-number")]
     display_line_number: bool,
+    #[structopt(short = "c", long = "count")]
+    display_count: bool,
+    #[structopt(short = "F", long = "fixed-strings")]
+    regex_off: bool,
 }
 
 fn main() -> Result<()> {
@@ -23,14 +28,19 @@ fn main() -> Result<()> {
     let mut reader = BufReader::new(f);
     let mut line = String::new();
     let mut line_num: u32 = 1;
+    if args.display_count {
+        grrs::print_count(reader, &args.pattern);
+        return Ok(());
+    }
+    let re = Regex::new(&args.pattern).unwrap();
     loop {
         if let Ok(0) = reader.read_line(&mut line) {
             break;
         }
         if args.display_line_number {
-            grrs::print_output_with_numbers(&line, &args.pattern, line_num);
+            grrs::print_output_with_numbers(&line, &args.pattern, args.regex_off, &re, line_num);
         } else {
-            grrs::print_output(&line, &args.pattern);
+            grrs::print_output(&line, &args.pattern, args.regex_off, &re);
         }
         line.clear();
         line_num += 1;
