@@ -16,7 +16,32 @@ fn print_line(line: &str, pattern: &str) {
 }
 
 fn print_line_regex(line: &str, pattern: &str, re: &Regex) {
-    let m: Vec<&str> = re.find_iter(line).map(|x| x.as_str()).collect();
+    let m: Vec<[usize; 2]> = re.find_iter(line).map(|x| [x.start(), x.end()]).collect();
+    let mut modified_line: String = line.get(0..m[0][0]).unwrap().to_string();
+    let length = m.len();
+    let mut index = 0;
+    while index < length {
+        modified_line = format!(
+            "{}{}{}",
+            modified_line,
+            format!(
+                "{}",
+                style(line.get(m[index][0]..m[index][1]).unwrap())
+                    .red()
+                    .bold()
+            ),
+            line.get(
+                m[index][1]..if index < length - 1 {
+                    m[index + 1][0]
+                } else {
+                    line.len()
+                }
+            )
+            .unwrap()
+        );
+        index += 1;
+    }
+    print!("{}", modified_line);
 }
 
 fn print_line_with_numbers(line: &str, pattern: &str, line_num: u32) {
@@ -31,7 +56,39 @@ fn print_line_with_numbers(line: &str, pattern: &str, line_num: u32) {
     print!("{}", v);
 }
 
-fn print_line_with_numbers_regex(line: &str, pattern: &str, re: &Regex, line_num: u32) {}
+fn print_line_with_numbers_regex(line: &str, pattern: &str, re: &Regex, line_num: u32) {
+    let m: Vec<[usize; 2]> = re.find_iter(line).map(|x| [x.start(), x.end()]).collect();
+    let mut modified_line: String = format!(
+        "{}{}{}",
+        style(&line_num.to_string()).green(),
+        style(":").blue(),
+        line.get(0..m[0][0]).unwrap().to_string()
+    );
+    let length = m.len();
+    let mut index = 0;
+    while index < length {
+        modified_line = format!(
+            "{}{}{}",
+            modified_line,
+            format!(
+                "{}",
+                style(line.get(m[index][0]..m[index][1]).unwrap())
+                    .red()
+                    .bold()
+            ),
+            line.get(
+                m[index][1]..if index < length - 1 {
+                    m[index + 1][0]
+                } else {
+                    line.len()
+                }
+            )
+            .unwrap()
+        );
+        index += 1;
+    }
+    print!("{}", modified_line);
+}
 
 pub fn print_output(line: &str, pattern: &str, regex_off: bool, re: &Regex) {
     if !regex_off {
